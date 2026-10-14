@@ -1,0 +1,122 @@
+# calprint configuration. Copy to ~/.config/calprint/config.toml and edit.
+
+# IANA timezone for display. Omit to use the Mac's system timezone.
+timezone = "America/Los_Angeles"
+
+# First column of the grid and first day of each weekly page. With the default
+# Sunday-evening print, the weekly page that prints Sunday night covers
+# Monday through the following Sunday.
+week_starts_on = "monday"
+
+# Printed as a QR code in the top-left corner of every page (e.g. a link to the
+# family Google Calendar or a planning doc). Remove to omit the QR code.
+qr_url = "https://calendar.google.com/"
+
+# ---------------------------------------------------------------------------
+# Calendars. Each one needs exactly one of:
+#   ics_url   - Google Calendar > Settings > (calendar) > Integrate calendar >
+#               "Secret address in iCal format". No sign-in needed; keep it private.
+#   google_id - A calendar ID for the Google Calendar API (e.g. "primary" or
+#               "abc123@group.calendar.google.com"). Requires `calprint auth` once.
+#               `calprint calendars` lists the IDs you can use.
+#
+#   initial    - Prefix on the grid: "C: Soccer". The same event on several
+#                calendars is printed once as "A+B+C: Vacation".
+#   person     - Name for the weekly detail list ("C: Soccer"). Defaults to `name`.
+#   shade_days - Gray out days that have an event on this calendar (holidays).
+#
+# Events titled with their own prefix ("A+B: Pick up @ School") are printed as-is.
+# One-off events print in bold; repeating events (lessons, practice) print light.
+# ---------------------------------------------------------------------------
+
+[[calendars]]
+name = "Adam"
+initial = "A"
+ics_url = "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics"
+
+[[calendars]]
+name = "Beth"
+initial = "B"
+ics_url = "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics"
+
+[[calendars]]
+name = "Charlie"
+initial = "C"
+ics_url = "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics"
+
+[[calendars]]
+name = "Denise"
+initial = "D"
+ics_url = "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics"
+
+[[calendars]]
+# A shared calendar whose event titles carry their own "A+B+C:" prefixes.
+name = "Family"
+ics_url = "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics"
+
+[[calendars]]
+name = "Holidays"
+shade_days = true
+ics_url = "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics"
+
+# [[calendars]]
+# name = "Me (via API)"
+# initial = "A"
+# google_id = "primary"
+
+# Names for initials typed into event titles that have no calendar of their own.
+[people]
+# E = "Erica"
+
+[printer]
+# CUPS queue name; see `calprint printers`. Omit to use the system default printer.
+name = "Your_Printer_Name"
+copies = 1
+# Passed to `lp -o`. Wall pages should be single-sided US Letter.
+options = ["media=Letter", "sides=one-sided"]
+# Set false to render and archive PDFs without printing (useful while testing).
+enabled = true
+
+[schedule]
+# Weekly page for the upcoming week, printed on this day/time.
+weekly = true
+weekly_day = "sunday"
+weekly_time = "18:00"
+# Monthly page for next month, printed on the last day of each month at this time.
+monthly = true
+monthly_time = "18:00"
+# If the Mac was asleep or offline at print time, still print when it comes back
+# within this many hours. Anything later is skipped (and logged).
+catch_up_hours = 12
+
+[layout]
+time_format = "12h"      # "7:15pm"; or "24h"
+show_location = true     # "@ Place" in the weekly detail list
+weekly_details = true    # day-by-day list below the weekly grid
+
+[summarize]
+# Condense each day's events into a few short lines for its grid cell with a
+# local Ollama model. The weekly detail list below the grid always keeps full
+# detail. If Ollama is unreachable, days print in full (smaller text) instead.
+enabled = false
+days = "all"              # or "overfull": only days whose events don't fit their cell
+url = "http://localhost:11434"
+model = "gemma4:26b"      # a variant such as "gemma4:26b-mlx" is used if that's what is installed
+# Few-shot examples: pairs of a past day's events and the cell text you'd write.
+# Omit to use the built-in generic examples (examples.default.toml).
+# examples_file = "~/.config/calprint/examples.toml"
+timeout_secs = 180
+
+[google]
+# Only needed for google_id calendars. Create an OAuth client of type
+# "Desktop app" in Google Cloud Console and download its JSON here.
+credentials_file = "~/.config/calprint/credentials.json"
+token_file = "~/.config/calprint/token.json"
+
+[output]
+# Every generated PDF is kept here (named like 2026-11-month.pdf). Defaults to
+# <state_dir>/pdf. Avoid ~/Documents and ~/Desktop: macOS privacy protection can
+# block the background agent from writing there.
+# archive_dir = "~/Calendar Printouts"
+# Where calprint remembers what it has already printed.
+state_dir = "~/Library/Application Support/calprint"

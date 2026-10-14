@@ -1,0 +1,59 @@
+# Few-shot examples for summarizing calendar days with a local LLM.
+#
+# Each example pairs one day's events, exactly as calprint passes them to the
+# model (see `calprint summarize FROM TO --all`), with the cell a person would
+# write for that day. Each cell line starts with the #numbers of the events it
+# shows; calprint adds the time (from the earliest timed event, skipping all-day
+# and daily ones) and makes one-off events bold. A cell of (nothing) prints
+# nothing that day. Real examples from your own past calendar work best: copy
+# this file to ~/.config/calprint/examples.toml, replace these fictional ones,
+# and set `summarize.examples_file`.
+
+[[example]]
+events = """
+#1 [repeats] A takes Sam and Lily to school (7:30am)
+#2 [one-off] L: Dentist cleaning (2-2:45pm)
+#3 [repeats] S: Robotics Club (3:15pm)
+#4 [repeats] B picks up Sam from Oak Hill (4:30pm)
+#5 [repeats] L: Gymnastics (Level 3, Coach Dana) (5:30pm)
+"""
+cell = """
+#2 L: Dentist
+#3 S: Robotics
+#5 L: Gym
+"""
+
+[[example]]
+events = """
+#1 [one-off] A+S+L: Fly to Denver (UA 1432) (8:05am)
+#2 [repeats] S: Piano lesson with Mrs. Ortiz (4pm)
+#3 [repeats] L: Swim (L4) (6:30pm)
+#4 [one-off] B: Dinner with Jen (7-9pm)
+"""
+cell = """
+#1 A+S+L: Fly to Denver
+#4 B: Dinner w/ Jen
+"""
+
+[[example]]
+events = """
+#1 [one-off] S+L: No school (all day)
+#2 [repeats daily] S+L: Winter camp at the Y (9am)
+#3 [one-off] S: Max's 8th birthday party (1-3pm)
+#4 [repeats] L: Soccer game (11:30am)
+"""
+cell = """
+#1 S+L: No school
+#2 S+L: Camp
+#4 L: Soccer
+#3 S: Max's bday
+"""
+
+[[example]]
+events = """
+#1 [repeats] A takes Sam and Lily to school (7:30am)
+#2 [repeats] B picks up Sam from Oak Hill (4:30pm)
+"""
+cell = """
+(nothing)
+"""
