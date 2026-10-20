@@ -40,13 +40,15 @@ events = """
 #1 [one-off] S+L: No school (all day)
 #2 [repeats daily] S+L: Winter camp at the Y (9am)
 #3 [one-off] S: Max's 8th birthday party (1-3pm)
-#4 [repeats] L: Soccer game (11:30am)
+#4 [repeats] Soccer game: Lily (11:30am)
+#5 [repeats] Art class: Sam & Lily (2pm)
 """
 cell = """
 #1 S+L: No school
 #2 S+L: Camp
 #4 L: Soccer
 #3 S: Max's bday
+#5 S+L: Art
 """
 
 [[example]]

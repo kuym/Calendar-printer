@@ -88,6 +88,7 @@ Rules:
 - Start every line with the number of the event it shows, like \"#2 C: Chess\". A line that merges events lists them all, like \"#1 #3 A+C+D: L.A. trip\".
 - Do not write times; they are added to each line automatically from the events.
 - Prefix each item with the initials of the people involved, like \"C: \" or \"A+C+D: \".
+- Initials always go before the colon and the activity after it, even when the event title is written the other way around: for \"Art class: Charlie & Denise\" write \"C+D: Art class\", never \"Art class: C+D\". Never put an activity, group or place before the colon.
 - Drop filler words, room numbers, and details a family member already knows; merge items that belong together.
 - Prefer keeping one-off events over routine ones if space is short.
 - If nothing is worth printing (only routine drop-offs, pick-ups or bus times), reply with exactly: {NOTHING}{people}"
@@ -173,13 +174,41 @@ pub fn assemble(cfg: &Config, items: &[&Event], day: NaiveDate, lines: &[ReplyLi
             let evs: Vec<&Event> = l.refs.iter().map(|&r| items[r - 1]).collect();
             let bold = evs.iter().any(|e| !e.recurring);
             let time = evs.iter().filter(|e| render::grid_time(cfg, e, day).is_some()).min_by_key(|e| e.start).and_then(|e| render::grid_time(cfg, e, day));
+            let label = initials_first(cfg, &l.label);
             let text = match time {
-                Some(t) => format!("{} {t}", l.label),
-                None => l.label.clone(),
+                Some(t) => format!("{label} {t}"),
+                None => label,
             };
             CellLine { text, bold }
         })
         .collect()
+}
+
+/// The initial for a known initial or person's name ("C", "Charlie" -> "C"), from
+/// the calendars and `[people]`.
+fn initial_for(cfg: &Config, word: &str) -> Option<String> {
+    let known = cfg.calendars.iter().filter(|c| !c.initial.is_empty()).map(|c| (c.initial.as_str(), c.person.as_str())).chain(cfg.people.iter().map(|(i, n)| (i.as_str(), n.as_str())));
+    let mut hits: Vec<&str> = known.filter(|(i, n)| *i == word || (!n.is_empty() && n.eq_ignore_ascii_case(word))).map(|(i, _)| i).collect();
+    hits.sort_by_key(|i| i.len());
+    hits.first().map(|i| i.to_string())
+}
+
+/// Initials joined by "+", if every part of `s` ("C+D", "Charlie & Denise") is a known person.
+fn as_initials(cfg: &Config, s: &str) -> Option<String> {
+    let parts: Vec<&str> = s.split(['+', '&', ',', '/']).flat_map(|p| p.split(" and ")).map(str::trim).filter(|p| !p.is_empty()).collect();
+    let initials: Vec<String> = parts.iter().map(|p| initial_for(cfg, p)).collect::<Option<_>>()?;
+    (!initials.is_empty()).then(|| initials.join("+"))
+}
+
+/// Put the people before the colon: "Art class: C+D" -> "C+D: Art class".
+fn initials_first(cfg: &Config, label: &str) -> String {
+    match label.split_once(": ") {
+        Some((head, tail)) if as_initials(cfg, head).is_none() => match as_initials(cfg, tail) {
+            Some(initials) => format!("{initials}: {}", head.trim()),
+            None => label.to_string(),
+        },
+        _ => label.to_string(),
+    }
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -385,6 +414,16 @@ mod tests {
         let cells = assemble(&cfg, &items, day, &reply);
         let text: Vec<(&str, bool)> = cells.iter().map(|c| (c.text.as_str(), c.bold)).collect();
         assert_eq!(text, vec![("C: Chess 3:30p", false), ("C: Camp", false), ("D: PTC 10:05-10:30a", true), ("Holiday", true)]);
+    }
+
+    #[test]
+    fn initials_go_before_the_colon() {
+        let cfg = crate::config::parse(include_str!("../config.example.toml")).unwrap();
+        assert_eq!(initials_first(&cfg, "Art class: C+D"), "C+D: Art class");
+        assert_eq!(initials_first(&cfg, "Art class: Denise & Charlie"), "D+C: Art class");
+        assert_eq!(initials_first(&cfg, "C+D: Art class"), "C+D: Art class");
+        assert_eq!(initials_first(&cfg, "Book club: Moby Dick"), "Book club: Moby Dick");
+        assert_eq!(initials_first(&cfg, "Halloween"), "Halloween");
     }
 
     #[test]
