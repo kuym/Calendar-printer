@@ -18,6 +18,8 @@ pub struct Event {
     /// Indices into `Config::calendars` this event appears on (several after merging duplicates).
     pub calendars: Vec<usize>,
     pub location: Option<String>,
+    /// Notes; searched for control annotations like "#dontprint", never printed.
+    pub description: Option<String>,
 }
 
 impl Event {
@@ -95,7 +97,7 @@ pub fn events_on(events: &[Event], day: NaiveDate) -> Vec<&Event> {
 
 #[cfg(test)]
 pub fn test_event(start: DateTime<Tz>, end: DateTime<Tz>, all_day: bool) -> Event {
-    Event { title: "x".into(), start, end, all_day, recurring: false, daily: false, calendars: vec![0], location: None }
+    Event { title: "x".into(), start, end, all_day, recurring: false, daily: false, calendars: vec![0], location: None, description: None }
 }
 
 #[cfg(test)]

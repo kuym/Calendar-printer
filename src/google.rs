@@ -297,6 +297,7 @@ impl Client {
                 daily: item["recurringEventId"].as_str().and_then(|r| daily.get(r)).copied().unwrap_or(false),
                 calendars: vec![cal_index],
                 location: item["location"].as_str().map(str::trim).filter(|s| !s.is_empty()).map(String::from),
+                description: item["description"].as_str().map(str::trim).filter(|s| !s.is_empty()).map(String::from),
             });
         }
         Ok(out)

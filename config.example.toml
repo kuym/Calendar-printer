@@ -98,6 +98,8 @@ weekly_details = true    # day-by-day list below the weekly grid
 # Condense each day's events into a few short lines for its grid cell with a
 # local Ollama model. The weekly detail list below the grid always keeps full
 # detail. If Ollama is unreachable, days print in full (smaller text) instead.
+# The same model also recognizes misspelled control hashtags such as
+# "#dontprnit" (see README, "Control annotations").
 enabled = false
 days = "all"              # or "overfull": only days whose events don't fit their cell
 url = "http://localhost:11434"

@@ -30,6 +30,7 @@ struct RawEvent {
     uid: String,
     summary: Option<String>,
     location: Option<String>,
+    description: Option<String>,
     status: Option<String>,
     start: Option<(DateTime<Tz>, bool)>,
     end: Option<DateTime<Tz>>,
@@ -176,6 +177,7 @@ fn read_events(text: &str, display: Tz) -> Vec<RawEvent> {
                 "UID" => ev.uid = p.value.clone(),
                 "SUMMARY" => ev.summary = Some(unescape(&p.value)),
                 "LOCATION" => ev.location = Some(unescape(&p.value)),
+                "DESCRIPTION" => ev.description = Some(unescape(&p.value)),
                 "STATUS" => ev.status = Some(p.value.to_ascii_uppercase()),
                 "DTSTART" => ev.start = parse_value(&p.value, p.param("TZID"), p.param("VALUE"), display).ok(),
                 "DTEND" => ev.end = parse_value(&p.value, p.param("TZID"), p.param("VALUE"), display).ok().map(|v| v.0),
@@ -316,6 +318,7 @@ pub fn parse_feed(text: &str, cal_index: usize, cal_name: &str, from: DateTime<T
                     daily: daily.get(ev.uid.as_str()).copied().unwrap_or(false),
                     calendars: vec![cal_index],
                     location: ev.location.clone().filter(|l| !l.trim().is_empty()),
+                    description: ev.description.clone().filter(|d| !d.trim().is_empty()),
                 });
             }
         }

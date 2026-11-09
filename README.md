@@ -158,6 +158,22 @@ names and black rules.
 Everything is grayscale, which suits a monochrome laser printer. Emoji in event
 titles are dropped; characters outside Western European scripts print as `?`.
 
+## Control annotations
+
+Hashtags in an event's title or notes can tell calprint what to do with it. The
+`#` is required: a plain "dont print" in a title is just text.
+
+- **Don't print**: `#dontprint`, `#donotprint`, `#do_not_print`, `#DontPrint`,
+  `#don't print`, `#noprint`, and other variations or typos (`#dontprnit`)
+  leave the event off every printed page. Mark one event in a repeating series
+  to hide just that occurrence, or the whole series to hide them all.
+
+Exact spellings (ignoring case, spaces and punctuation) are recognized directly.
+Any other hashtag is checked by the local LLM configured under `[summarize]`
+(when enabled), so typos and variations count while ordinary hashtags such as
+`#soccer` or `#reprint` don't; answers are cached in the state directory. If the
+LLM is off or unreachable, a hashtag within one typo of a known spelling counts.
+
 ## Summaries with a local LLM (optional)
 
 With `[summarize] enabled = true`, each day's events are condensed by a local
@@ -203,3 +219,4 @@ cargo run -- sample --out-dir /tmp
 | `src/printer.rs`   | `lp` / `lpstat`                                         |
 | `src/launchd.rs`   | LaunchAgent plist install/uninstall                     |
 | `src/summarize.rs` | Ollama day summaries with few-shot examples and cache   |
+| `src/annotations.rs` | `#dontprint`-style hashtags, fuzzy-matched by the LLM |

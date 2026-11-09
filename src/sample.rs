@@ -17,7 +17,7 @@ pub fn events(cfg: &Config, first: NaiveDate, last: NaiveDate) -> Vec<Event> {
     let shade: Vec<usize> = cfg.calendars.iter().position(|c| c.shade_days).into_iter().collect();
     let mut out = Vec::new();
     let mut add = |title: &str, start, end, all_day, recurring, calendars: Vec<usize>, loc: Option<&str>| {
-        out.push(Event { title: title.into(), start, end, all_day, recurring, daily: false, calendars, location: loc.map(String::from) });
+        out.push(Event { title: title.into(), start, end, all_day, recurring, daily: false, calendars, location: loc.map(String::from), description: None });
     };
     let mut d = first;
     while d <= last {

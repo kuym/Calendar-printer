@@ -247,22 +247,7 @@ impl<'a> Summarizer<'a> {
     }
 
     fn chat(&self, messages: &[Value]) -> Result<String> {
-        let body = json!({
-            "model": self.model,
-            "messages": messages,
-            "stream": false,
-            "think": false,
-            "options": {"temperature": 0.2},
-        });
-        let resp: Value = ureq::post(&format!("{}/api/chat", self.sc.url))
-            .timeout(StdDuration::from_secs(self.sc.timeout_secs))
-            .send_json(body)
-            .map_err(|e| match e {
-                ureq::Error::Status(code, r) => anyhow!("Ollama HTTP {code}: {}", r.into_string().unwrap_or_default()),
-                other => anyhow!("Ollama request failed: {other}"),
-            })?
-            .into_json()?;
-        resp["message"]["content"].as_str().map(String::from).ok_or_else(|| anyhow!("unexpected Ollama reply: {resp}"))
+        chat(self.sc, &self.model, messages, 0.2, false)
     }
 
     /// Summarize one day into at most `max_lines` wrapped cell lines.
@@ -315,6 +300,29 @@ impl<'a> Summarizer<'a> {
     }
 }
 
+/// One non-streaming Ollama chat request; `json` constrains the reply to a JSON value.
+pub fn chat(sc: &SummarizeConfig, model: &str, messages: &[Value], temperature: f64, json: bool) -> Result<String> {
+    let mut body = json!({
+        "model": model,
+        "messages": messages,
+        "stream": false,
+        "think": false,
+        "options": {"temperature": temperature},
+    });
+    if json {
+        body["format"] = json!("json");
+    }
+    let resp: Value = ureq::post(&format!("{}/api/chat", sc.url))
+        .timeout(StdDuration::from_secs(sc.timeout_secs))
+        .send_json(body)
+        .map_err(|e| match e {
+            ureq::Error::Status(code, r) => anyhow!("Ollama HTTP {code}: {}", r.into_string().unwrap_or_default()),
+            other => anyhow!("Ollama request failed: {other}"),
+        })?
+        .into_json()?;
+    resp["message"]["content"].as_str().map(String::from).ok_or_else(|| anyhow!("unexpected Ollama reply: {resp}"))
+}
+
 fn cache_key(model: &str, messages: &[Value]) -> String {
     let mut h = Sha256::new();
     h.update(model.as_bytes());
@@ -323,7 +331,7 @@ fn cache_key(model: &str, messages: &[Value]) -> String {
 }
 
 /// Use the configured model, or a same-named variant (e.g. "gemma4:26b" -> "gemma4:26b-mlx").
-fn resolve_model(sc: &SummarizeConfig) -> Result<String> {
+pub fn resolve_model(sc: &SummarizeConfig) -> Result<String> {
     let tags: Value = ureq::get(&format!("{}/api/tags", sc.url))
         .timeout(StdDuration::from_secs(10))
         .call()

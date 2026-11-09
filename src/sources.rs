@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, NaiveDate, TimeZone};
 use chrono_tz::Tz;
 
+use crate::annotations;
 use crate::config::{Config, Source};
 use crate::google;
 use crate::ics;
@@ -35,7 +36,8 @@ pub fn midnight(tz: Tz, day: NaiveDate) -> DateTime<Tz> {
         .unwrap_or_else(|| tz.from_utc_datetime(&day.and_hms_opt(0, 0, 0).unwrap()))
 }
 
-/// All events touching the inclusive date range [first, last].
+/// All events touching the inclusive date range [first, last], minus those
+/// annotated "don't print" (see `annotations`).
 pub fn fetch_events(cfg: &Config, first: NaiveDate, last: NaiveDate) -> Result<Vec<Event>> {
     let tz = cfg.timezone;
     let (from, to) = (midnight(tz, first), midnight(tz, last + Duration::days(1)));
@@ -57,5 +59,6 @@ pub fn fetch_events(cfg: &Config, first: NaiveDate, last: NaiveDate) -> Result<V
         crate::log(&format!("calendar {:?}: {} events", cal.name, found.len()));
         events.extend(found);
     }
-    Ok(merge_duplicates(events))
+    // Before merging, so a copy marked on one calendar doesn't hide the others.
+    Ok(merge_duplicates(annotations::drop_unprintable(cfg, events)))
 }

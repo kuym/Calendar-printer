@@ -1,6 +1,7 @@
 //! calprint: render Google Calendar into printable US Letter week and month
 //! pages, and print them on a schedule from a Mac.
 
+mod annotations;
 mod config;
 mod google;
 mod ics;
